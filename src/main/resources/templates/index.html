@@ -1,0 +1,1365 @@
+
+<!DOCTYPE html>
+
+<html>
+
+
+<head>
+    <link href="lib/toastr.css" rel="stylesheet" type="text/css" />
+
+    <style>
+
+        #map {
+            height: 95%;
+        }
+
+        html, body {
+            font-family: "Trebuchet MS", Helvetica, sans-serif;
+            font-size: 15px;
+            height: 100%;
+            margin: 0;
+            padding: 0;
+        }
+        #legend {
+            font-family: "Trebuchet MS", Helvetica, sans-serif;
+            background: #fff;
+            padding: 5px 7px;
+            margin: 10px;
+            max-width: 300px;
+            font-size: 15px;
+
+        }
+        #legend img {
+            vertical-align: middle;
+            height: 20px;
+            width: 20px;
+            margin: 0;
+        }
+        #year{
+            font-size: 15px;
+            font-family: "Trebuchet MS", Helvetica, sans-serif;
+            background: #fff;
+            padding: 5px 7px;
+            margin: 10px;
+            margin-bottom: 0;
+            vertical-align: middle;
+        }
+        h3 {
+            text-align: center;
+            margin-top: 0;
+            text-decoration: underline;
+        }
+        #heatMap{
+            font-family: "Trebuchet MS", Helvetica, sans-serif;
+            background: #fff;
+            padding: 5px 7px;
+            margin: 10px;
+            vertical-align: middle;
+            font-size: 15px;
+
+        }
+        #selectArray{
+            font-family: "Trebuchet MS", Helvetica, sans-serif;
+            background: #fff;
+            padding: 10px;
+            padding-bottom: 5px;
+            margin: 10px;
+            vertical-align: middle;
+            font-size: 15px;
+
+        }
+        #db_switch{
+            font-family: "Trebuchet MS", Helvetica, sans-serif;
+            background: #fff;
+            padding: 5px 10px;
+            margin: 10px 10px 5px;
+            vertical-align: middle;
+            font-size: 15px;
+
+        }
+        .flightPath{
+            font-family: "Trebuchet MS", Helvetica, sans-serif;
+            background: #fff;
+            padding: 5px 7px;
+            margin: 10px;
+            vertical-align: middle;
+            font-size: 15px;
+
+        }
+        .event-log{
+            font-family: "Trebuchet MS", Helvetica, sans-serif;
+            padding:0;
+            margin: 10px;
+            vertical-align: middle;
+            width: 400px;
+            overflow: auto;
+            position : relative;
+            bottom: 0;
+            max-height: 400px;
+
+        }
+        .event-log p{
+            font-family: "Trebuchet MS", Helvetica, sans-serif;
+            margin:0;
+            padding: 0;
+            background: rgba(255,255,255,0.7);
+            font-size: 10px;
+
+        }
+        .event-log p:nth-child(odd) {
+            background: rgba( 238,233,233 ,0.7);
+        }
+        .toastr-pos{
+            top: 75px;
+            margin: 0 auto;
+            left: 570px;
+        }
+        .button {
+            background-color: #4CAF50;
+            border: none;
+            color: white;
+            padding: 10px 20px;
+            text-align: center;
+            text-decoration: none;
+            display: inline-block;
+            font-size: 16px;
+            margin: 4px 2px;
+            cursor: pointer;
+        }
+        .button #legend {
+            padding: 5px 15px;
+        }
+        .flightPath .button{
+            width:150px;
+        }
+        hr{
+            margin:0;
+        }
+        select{
+            border:none;
+            text-align: center;
+            text-decoration: none;
+            display: inline-block;
+            font-size: 15px;
+            padding: 0;
+            margin: 0;
+        }
+        select::-ms-expand {
+            display: none;
+        }
+        .radioBtn{
+            cursor: pointer;
+        }
+        table th tr td{
+            padding-right: 10px;
+        }
+
+    </style>
+
+</head>
+<body>
+    <div id="map"></div>
+    <div id="legend"><h3>Legend</h3></div>
+    <div id="year">
+        Between <select id="selecta">
+        </select> and
+        <select id="selectb" >
+        </select>
+        &ensp;<button class="button" id="run" onclick="reload()">Run</button>
+        <hr>
+    </div>
+    <div id="selectArray">
+        <input id="option1"type="radio" class="radioBtn" name="checkbox" title="what is to be displayed in event lable"
+               value="Date, location and lat long" checked="checked" onclick="changeArrayCheckbox()" style="margin-bottom: 7px">
+        <label> Date, location and coordinates</label><br>
+        <hr>
+        <input id="option2" type="radio" class="radioBtn" name="checkbox" title="what is to be displayed in event lable"
+               value="Events and Count" onclick="changeArrayCheckbox()">
+        <label>Events and Count</label>
+    </div>
+    <div id="db_switch">
+        <input type="radio" class="radioBtn" name="tableSelect" value="pre2008" title="Change from post 2008 db to pre" onclick="changeDataSet()">
+        <label> Occurrences </label>
+        <input type="radio" class="radioBtn" name="tableSelect" value="post2008" title="Change from pre 2008 db to post" checked="checked" onclick="changeDataSet()">
+        <label> Findings </label>
+    </div>
+    <div id="heatMap">
+        <div><button class="button" onclick="toggleHeatMap()">Toggle HeatMap</button></div>
+    </div>
+    <div class="flightPath" id="flightPath">
+        <div><button class="button" id ="flightPathBtn" onclick="startPlottngFlightPath()" style="float: left;">Start Plotting</button></div>
+        <div><button class="button" id ="flightPathBtn2" onclick="stopPlottingFlightPath()"style="float: left;margin-left: 10px;">Stop Plotting</button></div>
+        <div><button class="button" id ="flightPathBtn3" onclick="showEventLog()"style="float: left;margin-left: 10px;">Show Log &emsp;</button></div>
+        <div><button class="button" id ="flightPathBtn4" onclick="deleteFlightPath()"style="float: left;margin-left: 10px;">Delete Path &emsp;</button></div>
+        <div><form action="/clear" method="POST"><button class="button" id ="logoutBtn" style="background-color: #bd362f">Log out </button></form></div>
+    </div>
+
+    <div class="toastr-pos"></div>
+    <div class="event-log" id="event-log" style=""></div>
+
+
+
+
+    <script type="text/javascript" src="lib/jquery.min.js"></script>
+    <script type="text/javascript" src="lib/accessdb.js"></script>
+    <script type="text/javascript"  src="lib/states1.js"></script>
+    <script defer
+            src="https://maps.googleapis.com/maps/api/js?key=AIzaSyCSKYvPbNZogwZQkbj8tLKcwAlkDIWrZNI&libraries=visualization&callback=initMap">
+    </script>
+    <script src="lib/IconScripts.js" type="text/javascript"></script>
+    <script src="lib/switchScripts.js" type="text/javascript"></script>
+    <script src="lib/querys.js" type="text/javascript"></script>
+    <script src="lib/flightPlans.js" type="text/javascript"></script>
+    <script src="lib/jquery.bootstrap-growl.min.js" type="text/javascript"></script>
+    <script src="lib/toastr.js" type="text/javascript"></script>
+
+    <script type="text/javascript" >
+
+        //var path = window.location.pathname;
+        //var dir = path.substring(1, path.lastIndexOf('/'))+"/";
+        //Open the NSTB Database file - must be located in the 'data' folder.
+        //var db = new ACCESSdb("D:/Karolis/ntsb-viewer/data/avall.mdb", {showErrors:true});
+        var allStates = [];
+        var labels = [];
+        var map;
+        var infoWindow;
+        var markers = [];
+        var GPSLatLng = [];
+        var allPointLatLng = [];
+        var year = 2016;
+        var year2 = 2017;
+        var heatmap;
+        var radioSelect = "Date, location and lat long";
+        var tableSelect = "post2008";
+        var flightPath;
+        var tempPosCnt = 0;
+        var pathSectionCount = 0;
+        var checkedEvents = [];
+        var refreshIntervalId;
+        var urlPath = "" + window.location.protocol + "//" + window.location.hostname;
+//        var urlPath = 'http://student.isa-software.com';
+
+        function initMap() {
+            map = new google.maps.Map(document.getElementById('map'), {
+                zoom: 4,
+                center: {lat: 40.245992,lng: -97.207031},
+                disableDefaultUI: true
+            });
+            $(document).ready(function(){
+                fillYearSelect();
+                processdbLatLng();
+                createStates();
+                createHeatMap();
+                displayLegend();
+                displayButtons();
+
+
+
+            });
+        }
+
+        //used by :initmap
+        //used to :store all the latlngs from the database into global variables
+        //uses :DMSDtoDDArray,updateEventTracker
+        function processdbLatLng(){
+            allPointLatLng = [];
+            GPSLatLng = [];
+            var count = {totalEvents : 0,plotable: 0};
+//            var tval = produceAllLatLongs(year,year2);
+            var tval = callRestService(urlPath + '/events/getCoordinatesByYear?year1='
+                        + year + '&year2=' + year2);
+            $.each(tval, function(index, item){
+                count.totalEvents ++;
+                if(item.lat !== null && item.lon !== null) {
+                    count.plotable++;
+                    allPointLatLng.push(DMSDtoDDArray(String(item.lat + item.lon)));
+                    GPSLatLng.push(String(item.lat + ',' + item.lon))
+                }
+            });
+
+            updateEventTracker(count, 3);
+        }
+
+        //used by :initmap
+        //used to :display all buttons onto the map
+        //uses :
+        function displayButtons() {
+            var flightPaths = document.getElementById('flightPath');
+            var years = document.getElementById('year');
+            var legend = document.getElementById('legend');
+            var heatMapBtn = document.getElementById('heatMap');
+            var checkBoxes = document.getElementById('selectArray');
+            var yearSet = document.getElementById('db_switch');
+            var eventLog = document.getElementById('event-log');
+            map.controls[google.maps.ControlPosition.LEFT_BOTTOM].clear();
+            map.controls[google.maps.ControlPosition.LEFT_TOP].clear();
+            map.controls[google.maps.ControlPosition.TOP_CENTER].clear();
+            map.controls[google.maps.ControlPosition.RIGHT_BOTTOM].clear();
+            map.controls[google.maps.ControlPosition.RIGHT_TOP].clear();
+            map.controls[google.maps.ControlPosition.BOTTOM_CENTER].clear();
+            map.controls[google.maps.ControlPosition.LEFT_BOTTOM].push(flightPaths);
+            map.controls[google.maps.ControlPosition.LEFT_BOTTOM].push(eventLog);
+            map.controls[google.maps.ControlPosition.LEFT_TOP].push(years);
+            map.controls[google.maps.ControlPosition.TOP_CENTER].push(heatMapBtn);
+            map.controls[google.maps.ControlPosition.RIGHT_BOTTOM].push(legend);
+            map.controls[google.maps.ControlPosition.RIGHT_TOP].push(yearSet);
+            map.controls[google.maps.ControlPosition.RIGHT_TOP].push(checkBoxes);
+            $(eventLog).hide();
+        }
+
+        //used by :initmap
+        //used to :display option to change year
+        //uses :
+        function fillYearSelect() {
+            var selecta = document.getElementById('selecta');
+            var selectb = document.getElementById('selectb');
+            selecta.length = 0;
+            selectb.length = 0;
+            var opt, optb;
+//            var tval = produceAllYearsUsed();
+            var tval = callRestService(urlPath+ '/events/getAllYearsUsed');
+            $.each(tval, function (index, item) {
+                opt = document.createElement('option');
+                optb = document.createElement('option');
+                opt.innerHTML = opt.value = item;
+                optb.innerHTML = optb.value = item;
+                selecta.appendChild(opt);
+                selectb.appendChild(optb);
+            });
+
+            if(tableSelect==="pre2008") {
+                selecta.remove(selecta.length-1);
+                selectb.remove(selectb.length-1);
+            }
+            $(selecta).val(year);
+            $(selectb).val(year2);
+
+        }
+
+        //used by :button
+        //used to :stop the flight path from automatically plotting
+        //uses :
+        function stopPlottingFlightPath(){
+            clearInterval(refreshIntervalId);
+        }
+
+        //used by :button
+        //used to :show event log
+        //uses :
+        function showEventLog() {
+            $('#event-log').toggle();
+            $(".event-log").animate({ scrollTop: $(this).height() }, "fast");
+        }
+
+        //used by :button
+        //used to :removes flight path and resets it
+        //uses :
+        function deleteFlightPath() {
+            if (flightPath){
+                flightPath.setMap(null);
+                tempPosCnt=0;
+                checkedEvents= [];
+                pathSectionCount=0;
+                $('#event-log').empty();
+            }
+        }
+
+        //used by : button
+        //used to :plot a flight path
+        //uses :flightPathSet, clearMarkersAndLabels, flightPathCoords, plotFlightPath
+        function startPlottngFlightPath(){
+            clearMarkersAndLabels();
+            flightPathSet();
+            var flightPlanCoordinates = flightPathCoords();
+            refreshIntervalId = setInterval(function () {
+                plotFlightPath(flightPlanCoordinates);
+            }, 500);
+        }
+
+        //used by :startPlottngFlightPath
+        //used to :access a file of flights in the us and put them into an array
+        //uses :
+        function flightPathCoords() {
+            var flightCoords = [];
+            $.each(flights,function (index, item) {
+                var logs = {};
+                logs.aircraftID = item.aircraftID;
+                logs.time = item.time;
+                logs.lat = item.lat;
+                logs.long = item.lng;
+                flightCoords.push(logs);
+            });
+            console.log(flightCoords)
+            return flightCoords;
+        }
+
+        //used by :startPlottngFlightPath
+        //used to :creates a flight path as well as a button for it
+        //uses :
+        function flightPathSet() {
+            flightPath = new google.maps.Polyline({
+                strokeColor: '#FF0000',
+                strokeOpacity: 1.0,
+                strokeWeight: 2
+            });
+            flightPath.setMap(map);
+        }
+
+        //used by :startPlottngFlightPath
+        //used to :plot a flight path based on timing from another function
+        //uses : interpolateFlightPath
+        function plotFlightPath(flightPlanCoordinates) {
+            tempPosCnt ++;
+            var path = flightPath.getPath();
+            for (var i = tempPosCnt-1; i < tempPosCnt; i ++) {
+                pathSectionCount++;
+                if (flightPlanCoordinates[i].aircraftID === flightPlanCoordinates[0].aircraftID) {
+                    interpolateFlightPath(flightPlanCoordinates,i,path);
+                }
+                else{
+                    alert("all points plotted");
+                    clearInterval(refreshIntervalId);
+                    break;
+                }
+
+            }
+        }
+
+        //used by :plotFlightPath
+        //used to : interpolate between two coords of the plane
+        //uses : hhmmssToSeconds, flightPathPositions, createFlightPathBound
+        function interpolateFlightPath(Coordinates,i,path) {
+            var t1 = hhmmssToSeconds(Coordinates[i].time,Coordinates[i+1].time)[0];
+            var t2 = hhmmssToSeconds(Coordinates[i].time,Coordinates[i+1].time)[1];
+            var deltaLat = Coordinates[i+1].lat - Coordinates[i].lat;
+            var deltaLng = Coordinates[i+1].long - Coordinates[i].long;
+            var time = 60;//in seconds
+            var t = t1+(pathSectionCount-1)*time;
+            if(t<t2) {
+                var timeTemp = (t - t1) / (t2 - t1);
+                var latPos = Coordinates[i].lat + (deltaLat * timeTemp);
+                var lngPos = Coordinates[i].long + (deltaLng * timeTemp);
+                path.push(new google.maps.LatLng(latPos, lngPos));
+                var releventPositions = flightPathPositions();
+                tempPosCnt--;
+                 createFlightPathBound(latPos,lngPos,releventPositions);
+
+            }
+            else{
+                pathSectionCount = 0;
+            }
+        }
+
+        //used by :interpolateFlightPath
+        //used to : split hhmmss time into seconds
+        //uses :
+        function hhmmssToSeconds(x,y) {
+            var temp = x.split(':');
+            var t1 = (parseInt(temp[0]) * 60 * 60) + (parseInt(temp[1]) * 60) + parseInt(temp[2]);//into seconds from hh:mm:ss
+            var temp2 = y.split(':');
+            var t2 = (parseInt(temp2[0]) * 60 * 60) + (parseInt(temp2[1]) * 60) + parseInt(temp2[2]);//into seconds from hh:mm:ss
+            return [t1,t2]
+        }
+
+        //used by :interpolateFlightPath
+        //used to :create array of possible events that may come into contact with the flight
+        //uses :
+        function flightPathPositions(){
+            var releventPositions = [];
+            loop1:
+                for(var i=0;i<allPointLatLng.length;i++) {
+                    var currentLatLong = new google.maps.LatLng(allPointLatLng[i].lat, allPointLatLng[i].lng);
+                    if (google.maps.geometry.poly.isLocationOnEdge(currentLatLong, flightPath, 4e-1)) {
+                        for (var j = 0; j < checkedEvents.length; j++) {
+                            if (String(currentLatLong) === String(checkedEvents[j])) {
+                                continue loop1;
+                            }
+                        }
+                        var objPush = {};
+                        objPush.latLng = currentLatLong;
+                        objPush.DMS = GPSLatLng[i];
+                        releventPositions.push(objPush);
+                    }
+                }
+            return releventPositions;
+        }
+
+
+        //used by :interpolateFlightPath
+        //used to :create a circle bound around the plane
+        //uses :detectEventsInBound
+        function createFlightPathBound(latPos,lngPos,releventPositions) {
+            var circle = new google.maps.Circle({
+                map: map,
+                radius: 16093,    //16093 = 10 miles in metres
+                fillOpacity: 0.0,
+                strokeOpacity: 0.0,
+                center: new google.maps.LatLng(latPos, lngPos)
+            });
+            detectEventsInBound(circle,releventPositions);
+
+        }
+
+        //used by :createFlightPathBound
+        //used to : check if a set of event coords are in a circle bounds
+        //uses :flightPathColectData
+        function detectEventsInBound(circle, releventPositions) {
+            var bound = circle.getBounds();
+            var exist = false;
+            for(var i=0;i<releventPositions.length;i++) {
+                for (var j = 0; j < checkedEvents.length; j++) {
+                    if (String(releventPositions[i].latLng) === String(checkedEvents[j])) {
+                        exist = true;
+                        releventPositions.splice(i,1);
+                        i--;
+                    }
+                }
+                if(!exist && bound.contains(releventPositions[i].latLng)) {
+                    flightPathCollectData(releventPositions[i].DMS);
+                    checkedEvents.push(releventPositions[i].latLng);
+
+                }
+            }
+        }
+
+        //used by :detectEventsInBound
+        //used to :displays data on a crash
+        //uses :printEvent
+        function flightPathCollectData(position) {
+            var findings = '';
+            var date, lat, lon, state;
+            var dataBaseLatLongs = position.split(',');
+            //var tval = GetDataForFlightPathEvent(dataBaseLatLongs[0],dataBaseLatLongs[1]);
+
+            if(tableSelect==="post2008") {
+                var tval = callRestService(urlPath + '/events/finding/getDataByLatLon?lat='
+                    + dataBaseLatLongs[0] + '&lon=' + dataBaseLatLongs[1]);
+            } else{
+                var tval = callRestService(urlPath + '/events/occurrence/getDataByLatLon?lat='
+                    + dataBaseLatLongs[0] + '&lon=' + dataBaseLatLongs[1]);
+            }
+
+            $.each(tval,function (index,item) {
+                var fullDate = item.date;
+                d = new Date(fullDate);
+                date = (d.getMonth() + 1) + '/' + d.getDate() + '/' + d.getFullYear();
+                lat = item.lat;
+                lon = item.lon;
+                state = (item.state).trim();
+                if(item.description !== null) {
+                    findings += (item.description + '<br>');
+                }
+                else{
+                    findings += ("There was no data recorded for this crash")
+                }
+            });
+            printEvent(state,date,lat,lon,findings);
+
+        }
+
+        //used by :flightPathColectData
+        //used to :displays alert for  nearby crash
+        //uses :toastrOptions
+        function printEvent(state,date,lat,lon,findings) {
+            var alertString = ('WARNING, in the state of '+(state).toLowerCase()+' on '+date+' at lat: '+lat+' and ' +
+            'lon: '+lon+' a plane crashed due to... <br>'+findings);
+            $(document).ready(function() {
+                toastrOptions();
+                $(function () {
+                    toastr["warning"]("Recent plane crash in your area.", "Warning");
+                });
+                var objCont = $('#event-log');
+                objCont.append('<p>' + alertString + '</p>');
+                $(".event-log").animate({ scrollTop: $(this).height() }, "fast");
+
+            })
+        }
+
+        //used by :printEvent
+        //used to : set options for the toastr alert
+        //uses :
+        function toastrOptions() {
+            toastr.options = {
+                "closeButton": true,
+                "debug": false,
+                "newestOnTop": false,
+                "progressBar": true,
+                "positionClass": "toastr-pos",
+                "preventDuplicates": false,
+                "onclick": null,
+                "showDuration": "300",
+                "hideDuration": "1000",
+                "timeOut": "5000",
+                "extendedTimeOut": "1000",
+                "showEasing": "swing",
+                "hideEasing": "linear",
+                "showMethod": "fadeIn",
+                "hideMethod": "fadeOut"
+            }
+        }
+
+        //used by :button
+        //used to :reload the page and change the years
+        //uses : processdbLatLng, stateSelect, createHeatMap
+        function reload(){
+            clearMarkersAndLabels();
+            year = selecta.value;
+            year2 = selectb.value;
+            processdbLatLng();
+            displayButtons();
+            createStates();
+            createHeatMap();
+            deleteFlightPath();
+            flightPathSet();
+        }
+
+        //used by :radio button
+        //used to :reload the page and change the table to be viewed from the old to new and vice versa.
+        //uses : processdbLatLng,processdbLatLng,createHeatMap
+        function changeDataSet() {
+            clearMarkersAndLabels();
+            tableSelect = $("input[type='radio'][name='tableSelect']:checked").val();
+            if(tableSelect==="post2008") {
+                year = 2016;
+                year2 = 2017;
+            }
+            if(tableSelect==="pre2008") {
+                year = 2007;
+                year2 = 2008;
+            }
+            fillYearSelect();
+            processdbLatLng();
+            createStates();
+            createHeatMap();
+            displayLegend();
+            deleteFlightPath();
+            flightPathSet();
+
+        }
+
+        //used by :createHeatMap
+        //used to :get heat map points
+        //uses :
+        function getHeatMapPoints() {
+            var temparray = [];
+            for(var i=0;i<allPointLatLng.length;i++){
+                if(!isNaN(parseFloat(allPointLatLng[i].lat))&& !isNaN(parseFloat(allPointLatLng[i].lng))) {
+                    var data = new google.maps.LatLng(allPointLatLng[i].lat, allPointLatLng[i].lng);
+                    temparray.push(data);
+                }
+            }
+            return temparray;
+        }
+
+        //used by :reload, initMap, changeDataSet
+        //used to :create and display a heatmap for all LatLngs
+        //uses : getHeatMapPoints
+        function createHeatMap() {
+            var heatMapPoints = getHeatMapPoints();
+            heatmap = new google.maps.visualization.HeatmapLayer({
+                data: heatMapPoints,
+                radius: 15
+            });
+
+        }
+
+        //used by :button
+        //used to :toggle on and off the heat map
+        //uses :
+        function toggleHeatMap(){
+            for(i=0; i<markers.length; i++){
+            markers[i].setMap(null);
+            }
+            markers=[];
+            if (infoWindow) {
+                infoWindow.close();
+            }
+            for(var i=0;i<allStates.length;i++){
+                allStates[i].setMap(allStates[i].getMap() ? null : map);
+            }
+            heatmap.setMap(heatmap.getMap() ? null : map);
+        }
+
+        //used by :initmap, changeDataSet
+        //used to :display the legend with icons for dates before 2008
+        //uses :showMarkersForLegend, IconsForLegendpre2008, IconsForLegendpost2008
+        function displayLegend() {
+            var icons;
+            var legend = document.getElementById('legend');
+            if(tableSelect === "pre2008") {
+                icons = IconsForLegendpre2008();
+            }else {
+                icons = IconsForLegendpost2008();
+            }
+            while (legend.childElementCount>1) {
+                legend.removeChild(legend.lastChild);
+            }
+            for (var i in icons) {
+                var name = icons[i].name;
+                var icon = icons[i].url;
+                var id = icons[i].id;
+                var div = document.createElement('div');
+                div.innerHTML = '<hr>'+'<button class="button" onclick="showMarkersForLegend(\'' + id + '\')">' +
+                    '<img src="' + icon + '"></button> ' + name;
+                legend.appendChild(div);
+            }
+        }
+
+        //used by :showMarkersForLegend, getValsFromDb, changeArrayCheckbox, showArraysrightclk, showArrays, startPlottngFlightPath, reload, changeDataSet,createStates
+        //used to : clear markers, heatmaps and windows
+        //uses :
+        function clearMarkersAndLabels() {
+            for(i=0; i<markers.length; i++){
+                markers[i].setMap(null);
+            }
+            markers=[];
+            if (infoWindow) {
+                infoWindow.close();
+            }
+            if(heatmap){
+                heatmap.setMap(null);
+            }
+
+        }
+
+        //used by :displayLegend
+        //used to :access the database
+        //uses :getValsFromDb,DMSDtoDDArray,updateEventTracker,clearMarkersAndLabels
+        function showMarkersForLegend(name) {
+            var ev_coords = [];
+            var count = {totalEvents: 0, plotable: 0};
+            var occurrence = name;
+            var options = {};
+            var returnType = "jsonO";
+            options[returnType] = true;
+            clearMarkersAndLabels();
+            var tval = getValsFromDb(occurrence);
+            $.each(tval, function (index, item) {
+                count.totalEvents++;
+                if (item.lat !== null && item.lon !== null) {
+                    count.plotable++;
+                    ev_coords.push(DMSDtoDDArray(String(item.lat + item.lon)));
+                }
+            });
+            if (occurrence.split(',').length > 1) {
+                occurrence = "LOSS OF ENGINE POWER";
+            }
+            setIcons(occurrence, ev_coords);
+            if (occurrence !== "close") {
+                updateEventTracker(count, 4);
+            }
+        }
+
+        //used by :showMarkersForLegend, processdbLatLng
+        //used to :turns DMSD to a DD array
+        //uses :ConvertDMSDtoDD
+        function DMSDtoDDArray(array) {
+            var objpush = {};
+            objpush.lat = ConvertDMSDtoDD(array.slice(0, 2), array.slice(2, 4), array.slice(4, 6), array.slice(6, 7));
+            objpush.lng = ConvertDMSDtoDD(array.slice(7, 10), array.slice(10, 12), array.slice(12, 14), array.slice(14, 15));
+            return objpush;
+        }
+
+        //used by :showMarkersForLegend
+        //used to : set which icons to use
+        //uses :post2008Switch2,IconsPost2008,pre2008Switch,IconsPre2008,showMarkerInfo
+        function setIcons(occurrence, ev_coords) {
+            var z;
+            var marker;
+            for (var i = 0; i < ev_coords.length; i++) {
+                var iconSet;
+                if(tableSelect==="post2008") {
+                    z = post2008Switch2(occurrence);
+                    iconSet = IconsPost2008(z);
+                }else{
+                    z = pre2008Switch(occurrence);
+                    iconSet = IconsPre2008(z);
+                }
+                marker = new google.maps.Marker({
+                    position: ev_coords[i],
+                    icon: iconSet,
+                    map: map
+                });
+                markers.push(marker);
+                marker.addListener('click', showMarkerInfo);
+            }
+        }
+
+        //used by :showMarkersForLegend
+        //used to : get data from the database
+        //uses :showAllMiscLegendLatLongsPost2008,showAllMiscLegendLatLongsPre2008,clearMarkersAndLabels,showAllLatLongsForOccurrencePost2008,showAllLatLongsForEnginePre2008,showAllLatLongsForOccurrencePre2008
+        function getValsFromDb(occurrence) {
+            var tval;
+            if (occurrence === "x") {
+                //tval = showAllMiscLegendLatLongs(year, year2);
+                if (tableSelect === "post2008") {
+                    tval = callRestService(urlPath + '/events/finding/getMiscData?year1='
+                        + year + '&year2=' + year2);
+                } else{
+                    tval = callRestService(urlPath + '/events/occurrence/getMiscData?year1='
+                        + year + '&year2=' + year2);
+                }
+            }
+            else if(occurrence === "close") {
+                clearMarkersAndLabels();
+                var yearDiv = document.getElementById('year');
+                while (yearDiv.childElementCount > 5) {
+
+                    yearDiv.removeChild(yearDiv.lastChild);
+                }
+            }
+            else {
+                if (tableSelect === "post2008") {
+                    //tval = showAllLatLongsForOccurrence(occurrence, year, year2)
+                    tval = callRestService(urlPath + '/events/finding/getCoordinateByDescription?description='
+                            + occurrence + "&year1=" + year + '&year2=' + year2);
+                }
+                else{
+                    if (occurrence.split(',').length > 1) {
+                        //tval = showAllLatLongsForEngine(year, year2);
+                        tval = callRestService(urlPath + '/events/occurrence/getDataForEngine?year1='
+                                + year + '&year2=' + year2);
+                    }else{
+
+                        //tval = showAllLatLongsForOccurrence(occurrence, year,year2);
+                        tval = callRestService(urlPath + '/events/occurrence/getCoordinateByDescription?description='
+                            + occurrence + "&year1=" + year + '&year2=' + year2);
+                    }
+                }
+            }
+            return tval;
+        }
+
+        //used by :processdbLatLng,showMarkersForLegend,displayMarkers
+        //used to : update the event count
+        //uses :
+        function updateEventTracker(count,children) {
+            var div2 = document.createElement('div');
+            div2.innerHTML = '<br>Events being shown&emsp;:&emsp;'+count.plotable+'&ensp;/&ensp;'+count.totalEvents;
+            var yearDiv = document.getElementById('year');
+//            console.log('before'+yearDiv.childElementCount)
+            while(yearDiv.childElementCount>children){
+                yearDiv.removeChild(yearDiv.lastChild);
+            }
+//            console.log('after'+yearDiv.childElementCount)
+            yearDiv.appendChild(div2);
+        }
+
+        //used by :radio buttons
+        //used to :create global array of radio button names
+        //uses :clearMarkersAndLabels
+        function changeArrayCheckbox() {
+            clearMarkersAndLabels();
+            radioSelect  = $("input[type='radio'][name='checkbox']:checked").val();
+        }
+
+        //used by :createStates
+        //used to :creates an object for a state
+        //uses :
+        function createAState(label,newCoords) {
+            return new google.maps.Polygon({
+                id: label,
+                paths: newCoords,
+                strokeColor: '#FFFFFF',
+                strokeOpacity: 0.8,
+                strokeWeight: 2,
+                fillColor: '#FFFFFF',
+                fillOpacity: 0.5
+            });
+        }
+
+        //used by :initmap, reload,changeDataSet
+        //used to :display the states as polygons and logs the coordinates of their circumference
+        //uses : clearMarkersAndLabels, stateCount, createAState, createStateCountAreaArray,greenToRed,changeStateColours
+        function createStates() {
+            var stateCountAreaArray = [];
+            labels = [];
+            for(var i=0;i<allStates.length;i++){
+                allStates[i].setMap(null);
+            }
+            allStates=[];
+            clearMarkersAndLabels();
+            var stateCountArray = stateCount();
+            $.each(states, function (index, item) {
+                var newCoords = [];
+                var label = item.name;
+                var area = item.area;
+                $.each(item.point, function(i, val){
+                    var objpush = {};
+                    objpush.lat = parseFloat(val.lat);
+                    objpush.lng = parseFloat(val.lng);
+                    newCoords.push(objpush);
+                });
+                labels.push(label);
+                var newState = createAState(label,newCoords);
+                stateCountAreaArray.push(createStateCountAreaArray(label, stateCountArray,area));
+                allStates.push(newState);
+            });
+            var results = greenToRed(stateCountAreaArray);
+            changeStateColours(results);
+        }
+
+        //used by :createStates
+        //used to :create an array of the state name, number of events and area
+        //uses : findCount
+        function createStateCountAreaArray(label, stateCountArray,area) {
+            var temp = {};
+            temp.state = label;
+            temp.eventCount = findCount(label, stateCountArray);
+            temp.area = area;
+            return temp;
+        }
+
+        //used by :createStateCountAreaArray
+        //used to : find the count of the state with name 'label'
+        //uses :
+        function findCount(label, array) {
+            var eventCount;
+            for (var i = 0; i < array.length;i++){
+                if (array[i].state === (label).toUpperCase()){
+                    return eventCount =  array[i].count;
+                }
+            }
+        }
+        //used by :createStates
+        //used to : change the colours of each state to green to red range
+        //uses : findRGBColour, showArraysrightclk, showArrays
+        function changeStateColours(results) {
+            for(i=0;i<allStates.length;i++){
+                for(j=0;j<results.length;j++){
+                    var tempArray = results[j].split('-');
+                    if(allStates[i].id === tempArray[0]){
+                        allStates[i].fillColor = findRGBColour(tempArray[0], results);
+                        allStates[i].setMap(map);
+                        allStates[i].addListener('rightclick', showArraysrightclk);
+                        allStates[i].addListener('click', showArrays);
+                        infoWindow = new google.maps.InfoWindow();
+                    }
+                }
+            }
+        }
+
+        //used by :createStates
+        //used to :access all events for a state
+        //uses :GetEventForStateCountAndName
+        function stateCount() {
+            var stateCount = [];
+            //var tval = GetEventForStateCountAndName(year,year2);
+
+            var tval = callRestService(urlPath + '/events/getCountByState?year1='
+                + year + '&year2=' + year2);
+
+            $.each(tval, function (index, item) {
+                var stateData = {};
+                stateData.state = (item.name).trim();
+                stateData.count  = item.count;
+                stateCount.push(stateData);
+            });
+            return stateCount;
+        }
+
+        //used by :changeStateColours
+        //used to :change the value of an rgb colour to hex
+        //uses : rgbToHex
+        function findRGBColour(state, results){
+            var hexVal;
+            for(var i =0; i<results.length;i++){
+                var tempArray = results[i].split('-');
+                if (state === tempArray[0]){
+                    var stateRGBVal = tempArray[1].split(',');
+                    hexVal = rgbToHex(parseInt(stateRGBVal[0]), parseInt(stateRGBVal[1]), parseInt(stateRGBVal[2]));
+                }
+            }
+            return hexVal;
+        }
+
+        //used by :findRGBColour
+        //used to :change RGB colour to hex
+        //uses : componentToHex
+        function rgbToHex(r, g, b) {
+            return "#" + componentToHex(r) + componentToHex(g) + componentToHex(b);
+        }
+
+        //used by :rgbToHex
+        //used to :change a value to hex
+        //uses :
+        function componentToHex(c) {
+            var hex = c.toString(16);
+            return hex.length === 1 ? "0" + hex : hex;
+        }
+
+        //used by :createStates
+        //used to :find the values of a green to red colour scale for the state events
+        //uses : getRGB,sortByCount
+        function greenToRed(stateEventCountArea) {
+            var  eventCountPerKm= {};
+            for(var i=0;i<labels.length;i++) {
+                var results = [];
+                for(var j=0;j<stateEventCountArea.length; j++){
+                    if(labels[i] === stateEventCountArea[j].state){
+                        var count = stateEventCountArea[j].eventCount;
+                        var area = stateEventCountArea[j].area.replace(/[,]/g, '');
+                        break;
+                    }
+                }
+                var sortable = sortByCount(area, count, labels[i], eventCountPerKm);
+                var max = sortable[sortable.length - 1][1];
+
+                for (j = 0; j < sortable.length; j++) {
+                    var eventNo = sortable[j][1];
+                    var percentage = (eventNo / max) * 200;
+                    var rgbVal = getRGB(percentage);
+                    results.push(sortable[j][0] + '-' + rgbVal);
+
+                }
+            }
+            return results;
+        }
+
+        //used by :greenToRed
+        //used to :sorts an array of values into %
+        //uses :
+        function sortByCount(area, count, state, eventCountPerKm) {
+
+            var sortable = [];
+            eventCountPerKm[state] = (count / area);
+            for ( var i in eventCountPerKm) {
+                sortable.push([i, eventCountPerKm[i]]);
+            }
+            sortable.sort(function (a, b) {
+                return a[1] - b[1];
+            });
+            return sortable;
+        }
+
+        //used by :greenToRed
+        //used to :change a percentage value into an RGB colour
+        //uses :
+        function getRGB(number) {
+            var r, g, b;
+            number--;
+            if (number < 50) {
+                r = Math.floor(255 * (number / 50));
+                g = 255;
+
+            } else {
+                r = 255;
+                g = Math.floor(255 * ((50-number%50) / 50));
+            }
+            b = 0;
+            return String(r)+','+String(g)+','+String(b);
+        }
+
+        //used by :changeStateColours
+        //used to :display markers on right click
+        //uses :clearMarkersAndLabels,displayMarkers
+        function showArraysrightclk(event) {
+            var clickedState;
+            clearMarkersAndLabels();
+            for(i=0;i<allStates.length;i++){
+                if(google.maps.geometry.poly.containsLocation(event.latLng, allStates[i])){
+                    clickedState = labels[i];
+                    break;
+                }
+            }
+            displayMarkers(clickedState);
+        }
+
+        //used by :showArraysrightclk
+        //used to :create an icon to be used as marker
+        //uses :displayIconsForStatePost2008,displayIconsForStatePre2008,displayMarkerIcons,updateEventTracker
+        function displayMarkers(clickedState) {
+            var usableLatLngs = [];
+            var tval;
+            var count = {totalEvents: 0, plotable: 0};
+            var occurrences = [];
+
+            //tval = displayIconsForState(clickedState,year,year2);
+            if (tableSelect === "post2008") {
+                tval = callRestService(urlPath + '/events/finding/getDataByClickedState?stateName='
+                                       + clickedState.toUpperCase() + "&year1=" + year + '&year2=' + year2);
+            } else{
+                tval = callRestService(urlPath + '/events/occurrence/getDataByClickedState?stateName='
+                    + clickedState.toUpperCase() + "&year1=" + year + '&year2=' + year2);
+            }
+            $.each(tval, function (index, item) {
+                count.totalEvents++;
+                if (item.lat !== null && item.lon !== null) {
+                    count.plotable++;
+                    var latlng = item.lat + ',' + item.lon;
+                    for (var i = 0; i < GPSLatLng.length; i++) {
+                        if (latlng === GPSLatLng[i]) {
+                            occurrences.push(item.description);
+                            usableLatLngs.push(allPointLatLng[i]);
+                        }
+                    }
+                }
+            });
+            displayMarkerIcons(usableLatLngs, occurrences);
+            updateEventTracker(count,3)
+        }
+
+        //used by :displayMarkers
+        //used to :pick which icons to use
+        //uses :post2008Switch,IconsPost2008,pre2008Switch,IconsPre2008,showMarkerInfo
+        function displayMarkerIcons(usableLatLngs, occurrences) {
+            var marker;
+            for (var i = 0; i < usableLatLngs.length; i++) {
+                var iconSet;
+                if(tableSelect==="post2008") {
+                    var z = post2008Switch(occurrences[i]);
+                    iconSet = IconsPost2008(z);
+                }else{
+                    z = pre2008Switch(occurrences[i]);
+                    iconSet = IconsPre2008(z);
+                }
+                marker = new google.maps.Marker({
+                    position: usableLatLngs[i],
+                    icon: iconSet,
+                    map: map
+                });
+                markers.push(marker);
+                marker.addListener('click', showMarkerInfo);
+            }
+        }
+
+        //used by :displayMarkerIcons, setIcons
+        //used to :display an info window with event data for a marker
+        //uses : getMarkerInfoData
+        function showMarkerInfo(event) {
+            for(var i=0;i<allStates.length;i++){
+                if(google.maps.geometry.poly.containsLocation(event.latLng, allStates[i])) {
+                    var contentString = labels[i];
+                    var clickedState = labels[i];
+                }
+            }
+            for(i=0;i<allPointLatLng.length;i++){
+                if (event.latLng.equals(new google.maps.LatLng(allPointLatLng[i]))) {
+                    contentString += '<br>' + GPSLatLng[i] + '<hr>';
+                    var clickedLatLng = GPSLatLng[i];
+                    var tval = getMarkerInfoData(clickedLatLng);
+                    break;
+                }
+            }
+            contentString += tval;
+            infoWindow.setContent(contentString);
+            infoWindow.setPosition(event.latLng);
+            infoWindow.open(map);
+        }
+
+        //used by :showMarkerInfo
+        //used to :get data from the database for the markers infoWindow
+        //uses :GetDataOnMarkerPre2008,GetDataOnMarkerPost2008
+        function getMarkerInfoData(latLng)  {
+            var city;
+            var date;
+            var allEvents = [];
+            var eventLat = latLng.split(',')[0];
+            var eventLng = latLng.split(',')[1];
+            var occurrences = [];
+
+            //tval = GetDataOnMarker(year,year2,eventLat,eventLng);
+            if(tableSelect==="post2008"){
+                tval = callRestService(urlPath + '/events/finding/getDataByYearAndLatLon?year1='
+                    + year + "&year2=" + year2 + "&lat=" + eventLat + '&lon=' + eventLng);
+            } else{
+                tval = callRestService(urlPath + '/events/occurrence/getDataByYearAndLatLon?year1='
+                    + year + "&year2=" + year2 + "&lat=" + eventLat + '&lon=' + eventLng);
+            }
+
+            $.each(tval, function(index, item){
+                if (item.date){
+                    var fullDate = item.date;
+                    var x = new Date(fullDate);
+                    date = (x.getMonth()+1) + '/' +  x.getDate() + '/' +  x.getFullYear();
+                }
+                if(item.description){
+                    occurrences.push('<br>'+ item.description)
+                }else{
+                    occurrences.push('<br>'+ item.description);
+                }
+
+                city = item.city;
+                console.log(occurrences)
+            });
+            if(!city && !date && occurrences.length===0){
+                allEvents = "There was no data recorded from this crash"
+            } else {
+                allEvents += 'The date was: ' + String(date) + ' and the closest known location was: ' + String(city) + '<br> Occurrences: ' + occurrences ;
+            }
+            return allEvents;
+        }
+
+        //used by :showArrayLegend,processdbLatLng
+        //used to :convert from degrees minutes seconds direction to decimal degrees
+        //uses :
+        function ConvertDMSDtoDD(degrees, minutes, seconds, direction) {
+            var dd = parseFloat(degrees) + parseFloat(minutes)/60 + parseFloat(seconds)/(60*60);
+            if (direction === "S" || direction ===   "W") {
+                dd = dd * -1;
+            }
+            return (parseFloat(dd));
+        }
+
+        //used by :changeStateColours
+        //used to :show a label with info on state events on click
+        //uses : clearMarkersAndLabels,getData
+        function showArrays(event) {
+            var layer = document.createElement("div");
+            var contentString = '';
+            clearMarkersAndLabels();
+            for(i=0;i<allStates.length;i++){
+                if(google.maps.geometry.poly.containsLocation(event.latLng, allStates[i])){
+                    contentString +='<br>' + labels[i] + '<hr>';
+                    var clickedState = labels[i];
+                    var tval = getData(clickedState);
+                    var stateEvents = tval.stateEvents;
+                    var tableOfEvents = tval.tableOfData;
+                    contentString += stateEvents;
+                    //contentString += "<br><a href='#' class='showMore'>see more</a>";
+                    contentString += "<table class='labelData' style='padding: 10px'>" + tableOfEvents + "</table>";
+                    break;
+                }
+            }
+            layer.innerHTML=contentString;
+            $(layer).toggle(function () {
+                $('.labelData').css('display', 'none');
+            }, function () {
+                $('.labelData').css('display', 'block');
+            });
+            infoWindow.setContent(layer);
+            infoWindow.setPosition(event.latLng);
+            infoWindow.open(map);
+            var yearDiv = document.getElementById('year');
+            if(yearDiv.childElementCount>5){
+                yearDiv.removeChild(yearDiv.lastChild);
+            }
+        }
+
+        //used by :showArrays
+        //used to :access the database
+        //uses :addHeader_getData,sortData,displayLabel
+        function getData(stateName) {
+            var allEvents = [];
+            allEvents += ('<hr>');
+            var tval = addHeader_getData(allEvents,stateName);
+
+//            var tval = addHeader_getData(allEvents,stateName).data;
+            allEvents = tval.labelContents;
+
+            var occurrenceArray = sortData(tval.data).events;
+            var countNo = sortData(tval.data).ev_count;
+            if(radioSelect === "Events and Count") {
+                for (var i = 0; i < occurrenceArray.length; i ++) {
+                    allEvents += ('<tr><td style="padding-right: 10px">' + occurrenceArray[i].event +
+                    '</td><td style="padding-right: 10px">' + String(occurrenceArray[i].count) + '</td></tr>');
+                }
+            }
+
+            //else - radioSelect = "Date, location and lat long"
+            else {
+                for ( i = 0; i < occurrenceArray.length; i ++) {
+                    allEvents += ('<tr><td style="padding-right: 10px">' + occurrenceArray[i].date + '</td><td style="padding-right: 10px">' + occurrenceArray[i].city +
+                    '</td><td style="padding-right: 10px">' + occurrenceArray[i].lat + '</td><td style="padding-right: 10px">' + occurrenceArray[i].lon + '</td></tr>');
+                }
+            }
+            var countstr = displayLabel(countNo);
+            return {tableOfData: allEvents, stateEvents: countstr};
+        }
+
+        //used by :getData
+        //used to :sorts all the data from the data base
+        //uses :
+        function sortData(tval) {
+            var occurrenceArray = [];
+            var countNo = 0;
+            $.each(tval, function (index, item) {
+                countNo++;
+                var occurrences = {};
+                if (item.date) {
+                    var fullDate = item.date;
+                    var x = new Date(fullDate);
+                    occurrences.date = (x.getMonth() + 1) + '/' + x.getDate() + '/' + x.getFullYear();
+                    occurrences.city = item.city;
+                    occurrences.lat = item.lat;
+                    occurrences.lon = item.lon;
+                    if (item.lat === null ||  item.lon === null) {
+                        occurrences.lat = '';
+                        occurrences.lon = '';
+                    }
+                    occurrenceArray.push(occurrences);
+                }
+                if(item.description){
+                    var found = false;
+                    occurrences.event = item.description;
+
+                    for (var i = 0; i < occurrenceArray.length; i++) {
+                        if (occurrences.event === occurrenceArray[i].event) {
+                            occurrenceArray[i].count++;
+                            found = true;
+                        }
+                    }
+                    if (!found) {
+                        occurrences.count=1;
+                        occurrenceArray.push(occurrences);
+                    }
+                }
+            });
+            return {events:occurrenceArray,ev_count: countNo};
+        }
+
+
+        //used by :getData
+        //used to :get data from database and sets header
+        //uses :GetEventsAndCountForLabelPre2008,GetEventsAndCountForLabelPost2008,GetAllEventDataForLabel
+        function addHeader_getData(allEvents,stateName) {
+            if (radioSelect === "Events and Count") {
+                //var tval = GetEventsAndCountForLabel(stateName,year,year2);
+
+                if(tableSelect==='post2008') {
+                    var tval = callRestService(urlPath + '/events/finding/getDescriptionByStateAndYear?stateName='
+                        + stateName.toUpperCase() + "&year1=" + year + '&year2=' + year2);
+                } else {
+                    var tval = callRestService(urlPath + '/events/occurrence/getDescriptionByStateAndYear?stateName='
+                        + stateName.toUpperCase() + "&year1=" + year + '&year2=' + year2);
+                }
+                allEvents += ('<tr><th style="padding-right: 10px">Occurrence</th><th style="padding-right: 10px">Number in State</th>');
+            }
+
+            else if (radioSelect === "Date, location and lat long") {
+                //tval = GetAllEventDataForLabel(stateName,year,year2);
+                if(tableSelect==='post2008') {
+                    tval = callRestService(urlPath + '/events/getDataByStateAndYear?stateName='
+                        + stateName.toUpperCase() + "&year1=" + year + '&year2=' + year2);
+                } else{
+                    tval = callRestService(urlPath + '/events/getDataByStateAndYear?stateName='
+                        + stateName.toUpperCase() + "&year1=" + year + '&year2=' + year2);
+                }
+                allEvents += ('<tr><th style="padding-right: 10px">Date</th><th style="padding-right: 10px">Nearest Town/City</th><th style="padding-right: 10px">lat</th><th style="padding-right: 10px">lon</th>');
+            }
+
+            return {data:tval,labelContents:allEvents};
+        }
+
+        //used by :getData
+        //used to :creates a countstr, to put at the top of the label
+        //uses :
+        function displayLabel(count) {
+            var countstr = '';
+            if (count === 0) {
+                countstr = ("there were  no events between " + year + " and "+year2+"")
+            }
+            else if (count === 1) {
+                countstr = ("There was 1 event between " + year + " and "+year2+"")
+            }
+            else {
+                countstr = ("There are " + count + " recorded events between " + year + " and "+year2+"");
+            }
+            return countstr;
+        }
+
+
+    </script>
+
+</body>
+</html>
