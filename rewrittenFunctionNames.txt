@@ -1,0 +1,30 @@
+Function names rewritten from jquery.js to Controller.java as a REST service
+
+jquery.js -> Controller.java
+
+function produceAllLatLongs -> ("/getEventsCoordinatesByYear")
+
+function produceAllYearsUsed -> ("/getAllYearsUsed")
+
+function GetEventForStateCountAndName(year, year2) -> ("/getCountByState")
+
+function GetDataForFlightPathEvent(lat, lng) -> ("/getEventDataByLatLon")
+
+function GetAllEventDataForLabel(stateName,year,year2) -> ("/getEventDataByStateAndYear")
+
+function GetEventsAndCountForLabelPre2008 AND function GetEventsAndCountForLabelPost2008 -> ("/getDescriptionByStateAndYear")
+
+function GetDataOnMarkerPre2008 AND function GetDataOnMarkerPost2008 -> ("/getDescriptionByYearAndLatLon")
+
+function displayIconsForStatePre2008 AND function displayIconsForStatePost2008 -> ("/getEventDataByClickedState")
+
+function showAllLatLongsForOccurrencePre2008 AND function showAllLatLongsForOccurrencePost2008
+-> ("/getCoordinateByDescription")
+
+function showAllMiscLegendLatLongsPost2008(year, year2) ANDfunction showAllMiscLegendLatLongsPre2008(year, year2)
+-> ("/getEventMiscData")
+
+
+
+function showAllLatLongsForEnginePre2008(year, year2) // only for Pre2008? Yes, because that description exists only for events pre2008
+-> ("/getEventDataForEngine")

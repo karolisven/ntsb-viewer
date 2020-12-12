@@ -1,0 +1,11 @@
+data/
+accessdb_demo/AdmnCodes.mdb
+accessdb_demo/AdmnCodes.ldb
+avall.ldb
+avall.mdb
+HTMLAccess.mdb
+.idea/
+target/
+*iml
+presentation/
+./hgignore

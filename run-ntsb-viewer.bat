@@ -1,0 +1,1 @@
+mvn -Dspring-boot.run.jvmArguments="-Dspring.config.location=application.properties" spring-boot:run -X

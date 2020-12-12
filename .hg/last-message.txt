@@ -1,0 +1,2 @@
+Static content has been moved to the resources/static directory.
+Now the jquery can consume the Rest web services.

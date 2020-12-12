@@ -1,0 +1,8 @@
+management:
+  security:
+    enbaled: true
+
+spring:
+  resources:
+    chain:
+      enabled: true

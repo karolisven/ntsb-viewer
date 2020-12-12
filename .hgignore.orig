@@ -1,0 +1,13 @@
+syntax: glob
+
+data/
+accessdb_demo/AdmnCodes.mdb
+accessdb_demo/AdmnCodes.ldb
+avall.ldb
+avall.mdb
+HTMLAccess.mdb
+.idea/
+target/
+*iml
+src/main/resources/.DS_Store
+.DS_Store
